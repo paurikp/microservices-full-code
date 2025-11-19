@@ -20,17 +20,23 @@ public class CustomerService {
         return this.mapper.fromCustomer(customer);
 	}
 
-	public void updateCustomer(CustomerRequest request) {
+	public CustomerResponse updateCustomer(CustomerRequest request) {
 		var customer = this.repository.findById(request.id()).orElseThrow(() -> new CustomerNotFoundException(
 				String.format("Cannot update customer:: No customer found with the provided ID: %s", request.id())));
 		mergeCustomer(customer, request);
 		this.repository.save(customer);
+        return this.mapper.fromCustomer(customer);
 	}
 
 	private void mergeCustomer(Customer customer, CustomerRequest request) {
 		if (StringUtils.isNotBlank(request.firstname())) {
 			customer.setFirstname(request.firstname());
 		}
+
+        if (StringUtils.isNotBlank(request.lastname())) {
+            customer.setLastname(request.lastname());
+        }
+
 		if (StringUtils.isNotBlank(request.email())) {
 			customer.setEmail(request.email());
 		}

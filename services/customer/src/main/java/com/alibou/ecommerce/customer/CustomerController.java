@@ -31,10 +31,9 @@ public class CustomerController {
         return ResponseEntity.ok(this.service.createCustomer(request));
     }
 
-	@PutMapping
-	public ResponseEntity<Void> updateCustomer(@RequestBody @Valid CustomerRequest request) {
-		this.service.updateCustomer(request);
-		return ResponseEntity.accepted().build();
+	@PutMapping("/{customer-id}")
+	public ResponseEntity<CustomerResponse> updateCustomer(@RequestBody @Valid CustomerRequest request) {
+		return ResponseEntity.ok(this.service.updateCustomer(request));
 	}
 
 	@GetMapping
