@@ -21,10 +21,15 @@ public class CustomerController {
 
 	private final CustomerService service;
 
-	@PostMapping
-	public ResponseEntity<String> createCustomer(@RequestBody @Valid CustomerRequest request) {
-		return ResponseEntity.ok(this.service.createCustomer(request));
-	}
+//	@PostMapping
+//	public ResponseEntity<String> createCustomer(@RequestBody @Valid CustomerRequest request) {
+//		return ResponseEntity.ok(this.service.createCustomer(request));
+//	}
+
+    @PostMapping
+    public ResponseEntity<CustomerResponse> createCustomer(@RequestBody @Valid CustomerRequest request) {
+        return ResponseEntity.ok(this.service.createCustomer(request));
+    }
 
 	@PutMapping
 	public ResponseEntity<Void> updateCustomer(@RequestBody @Valid CustomerRequest request) {
