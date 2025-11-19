@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,18 +38,25 @@ public class OrderService {
 				() -> new BusinessException("Cannot create order:: No customer exists with the provided ID"));
 
 		var purchasedProducts = productClient.purchaseProducts(request.products());
+        var orderAmount = purchasedProducts.stream()
+                .map(p -> p.price().multiply(BigDecimal.valueOf(p.quantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
+		if (orderAmount.compareTo(BigDecimal.ZERO) < 0) {
+			throw new BusinessException("Cannot create order with zero total amount");
+		}
 
-		var order = this.repository.save(mapper.toOrder(request));
+		var order = this.repository.save(mapper.toOrder(request,orderAmount));
 
 		for (PurchaseRequest purchaseRequest : request.products()) {
 			orderLineService.saveOrderLine(
 					new OrderLineRequest(null, order.getId(), purchaseRequest.productId(), purchaseRequest.quantity()));
 		}
-		var paymentRequest = new PaymentRequest(request.amount(), request.paymentMethod(), order.getId(),
+		var paymentRequest = new PaymentRequest(orderAmount, request.paymentMethod(), order.getId(),
 				order.getReference(), customer);
 		paymentClient.requestOrderPayment(paymentRequest);
 
-		orderProducer.sendOrderConfirmation(new OrderConfirmation(request.reference(), request.amount(),
+		orderProducer.sendOrderConfirmation(new OrderConfirmation(request.reference(), orderAmount,
 				request.paymentMethod(), customer, purchasedProducts));
 
 		return order.getId();

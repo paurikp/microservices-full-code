@@ -2,10 +2,12 @@ package com.alibou.ecommerce.order;
 
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+
 @Service
 public class OrderMapper {
 
-	public Order toOrder(OrderRequest request) {
+	public Order toOrder(OrderRequest request, BigDecimal orderAmount) {
 		if (request == null) {
 			return null;
 		}
@@ -14,6 +16,7 @@ public class OrderMapper {
 				.reference(request.reference())
 				.paymentMethod(request.paymentMethod())
 				.customerId(request.customerId())
+                .totalAmount(orderAmount)
 				.build();
 	}
 
