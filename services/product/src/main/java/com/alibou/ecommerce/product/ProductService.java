@@ -18,10 +18,35 @@ public class ProductService {
 	private final ProductRepository repository;
 	private final ProductMapper mapper;
 
-	public Integer createProduct(ProductRequest request) {
-		var product = mapper.toProduct(request);
-		return repository.save(product).getId();
+	public ProductResponse createProduct(ProductRequest request) {
+		var product = this.repository.save(mapper.toProduct(request));
+		return this.mapper.toProductResponse(product);
 	}
+
+    public ProductResponse updateProduct(Integer productId, ProductRequest request) {
+        var product = this.repository.findById(productId).orElseThrow(() -> new EntityNotFoundException(
+                "Cannot update product:: No product found with the provided ID: " + productId));
+        mergeProduct(product, request);
+        this.repository.save(product);
+        return this.mapper.toProductResponse(product);
+    }
+    private void mergeProduct(Product product, ProductRequest request) {
+        if (request.name() != null && !request.name().isBlank()) {
+            product.setName(request.name());
+        }
+
+        if (request.description() != null && !request.description().isBlank()) {
+            product.setDescription(request.description());
+        }
+
+        if (request.price() != null) {
+            product.setPrice(request.price());
+        }
+
+        if (String.valueOf(request.availableQuantity()) != null) {
+            product.setAvailableQuantity(request.availableQuantity());
+        }
+    }
 
 	public ProductResponse findById(Integer id) {
 		return repository.findById(id).map(mapper::toProductResponse)
@@ -55,5 +80,9 @@ public class ProductService {
 		}
 		return purchasedProducts;
 	}
+
+    public void deleteProduct(Integer productId) {
+        this.repository.deleteById(productId);
+    }
 
 }

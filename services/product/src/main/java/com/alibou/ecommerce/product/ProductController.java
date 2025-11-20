@@ -3,12 +3,7 @@ package com.alibou.ecommerce.product;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -20,9 +15,15 @@ public class ProductController {
 	private final ProductService service;
 
 	@PostMapping
-	public ResponseEntity<Integer> createProduct(@RequestBody @Valid ProductRequest request) {
+	public ResponseEntity<ProductResponse> createProduct(@RequestBody @Valid ProductRequest request) {
 		return ResponseEntity.ok(service.createProduct(request));
 	}
+
+    @PutMapping("/{product-id}")
+    public ResponseEntity<ProductResponse> updateProduct(@PathVariable("product-id") Integer productId,
+                                                         @RequestBody @Valid ProductRequest request) {
+        return ResponseEntity.ok(service.updateProduct(productId, request));
+    }
 
 	@PostMapping("/purchase")
 	public ResponseEntity<List<ProductPurchaseResponse>> purchaseProducts(
@@ -39,4 +40,10 @@ public class ProductController {
 	public ResponseEntity<List<ProductResponse>> findAll() {
 		return ResponseEntity.ok(service.findAll());
 	}
+
+    @DeleteMapping("/{customer-id}")
+    public ResponseEntity<Void> delete(@PathVariable("customer-id") Integer productId) {
+        this.service.deleteProduct(productId);
+        return ResponseEntity.accepted().build();
+    }
 }
