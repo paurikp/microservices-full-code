@@ -10,6 +10,14 @@ public class PaymentMapper {
 			return null;
 		}
 		return Payment.builder().id(request.id()).paymentMethod(request.paymentMethod()).amount(request.amount())
-				.orderId(request.orderId()).build();
+				.paymentDetails(request.paymentDetails()).orderId(request.orderId()).build();
+	}
+
+	public PaymentResponse toResponse(Payment payment) {
+		if (payment == null) {
+			return null;
+		}
+		return new PaymentResponse(payment.getId(), payment.getAmount(), payment.getPaymentMethod(), payment.getOrderId(),
+				payment.getPaymentDetails(), payment.getCreatedDate(), payment.getLastModifiedDate());
 	}
 }
