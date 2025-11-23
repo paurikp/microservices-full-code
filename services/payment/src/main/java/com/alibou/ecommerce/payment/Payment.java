@@ -47,5 +47,8 @@ public class Payment {
 	@LastModifiedDate
 	@Column(insertable = false)
 	private LocalDateTime lastModifiedDate;
+	
+	@Column(length = 1000)
+	private String paymentDetails;
 
 }

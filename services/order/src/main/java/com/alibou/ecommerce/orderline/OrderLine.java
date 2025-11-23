@@ -1,5 +1,7 @@
 package com.alibou.ecommerce.orderline;
 
+import java.math.BigDecimal;
+
 import com.alibou.ecommerce.order.Order;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -30,4 +32,5 @@ public class OrderLine {
 	private Order order;
 	private Integer productId;
 	private double quantity;
+	private BigDecimal price;
 }

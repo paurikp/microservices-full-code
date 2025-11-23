@@ -1,24 +1,26 @@
 package com.alibou.ecommerce.order;
 
-import com.alibou.ecommerce.kafka.OrderConfirmation;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.alibou.ecommerce.customer.CustomerClient;
 import com.alibou.ecommerce.exception.BusinessException;
+import com.alibou.ecommerce.kafka.OrderConfirmation;
 import com.alibou.ecommerce.kafka.OrderProducer;
 import com.alibou.ecommerce.orderline.OrderLineRequest;
 import com.alibou.ecommerce.orderline.OrderLineService;
 import com.alibou.ecommerce.payment.PaymentClient;
 import com.alibou.ecommerce.payment.PaymentRequest;
 import com.alibou.ecommerce.product.ProductClient;
-import com.alibou.ecommerce.product.PurchaseRequest;
+import com.alibou.ecommerce.product.PurchaseResponse;
+
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,19 +40,30 @@ public class OrderService {
 				() -> new BusinessException("Cannot create order:: No customer exists with the provided ID"));
 
 		var purchasedProducts = productClient.purchaseProducts(request.products());
-        var orderAmount = purchasedProducts.stream()
-                .map(p -> p.price().multiply(BigDecimal.valueOf(p.quantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .setScale(2, RoundingMode.HALF_UP);
-		if (orderAmount.compareTo(BigDecimal.ZERO) < 0) {
-			throw new BusinessException("Cannot create order with zero total amount");
+
+		var orderAmount = request.amount();
+
+		if (orderAmount.equals(BigDecimal.valueOf(-1))) {
+			orderAmount = purchasedProducts.stream().map(p -> p.price().multiply(BigDecimal.valueOf(p.quantity())))
+					.reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, RoundingMode.HALF_UP);
+			if (orderAmount.compareTo(BigDecimal.ZERO) < 0) {
+				throw new BusinessException("Cannot create order with zero total amount");
+			}
 		}
 
-		var order = this.repository.save(mapper.toOrder(request,orderAmount));
+		var order = this.repository.save(mapper.toOrder(request, orderAmount));
 
-		for (PurchaseRequest purchaseRequest : request.products()) {
-			orderLineService.saveOrderLine(
-					new OrderLineRequest(null, order.getId(), purchaseRequest.productId(), purchaseRequest.quantity()));
+//		for (PurchaseRequest purchaseRequest : request.products()) {
+//			orderLineService.saveOrderLine(new OrderLineRequest(null, order.getId(), purchaseRequest.productId(),
+//					purchaseRequest.quantity()));
+//		}
+		for (PurchaseResponse purchaseResponse : purchasedProducts) {
+
+			var orderLinePrice = purchaseResponse.price().multiply(BigDecimal.valueOf(purchaseResponse.quantity()))
+					.setScale(2, RoundingMode.HALF_UP);
+
+			orderLineService.saveOrderLine(new OrderLineRequest(null, order.getId(), purchaseResponse.productId(),
+					purchaseResponse.quantity(), orderLinePrice));
 		}
 		var paymentRequest = new PaymentRequest(orderAmount, request.paymentMethod(), order.getId(),
 				order.getReference(), customer);
