@@ -66,8 +66,8 @@ public class OrderService {
 					purchaseResponse.quantity(), orderLinePrice));
 		}
 		var paymentRequest = new PaymentRequest(orderAmount, request.paymentMethod(), order.getId(),
-				order.getReference(), customer);
-		paymentClient.requestOrderPayment(paymentRequest);
+				order.getReference(), customer, request.paymentDetails());
+		Integer paymentId = paymentClient.requestOrderPayment(paymentRequest);
 
 		orderProducer.sendOrderConfirmation(new OrderConfirmation(request.reference(), orderAmount,
 				request.paymentMethod(), customer, purchasedProducts));
